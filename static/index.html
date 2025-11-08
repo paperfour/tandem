@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Tandem</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #f8f9fa;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1></h1>FastAPI tests</h1>
+    
+    <!-- <button onclick="login()">Login!</button> -->
+    <a href="/login">Loging?</a>
+    <!-- <button onclick="createStudent()">Click Me to Create Student!</button>
+    <button onclick="createCourse()">Click Me to Create Course!</button>
+    <button onclick="setCoursesForStudent()">Click Me to Set Courses For Student!</button>
+    <button onclick="createAppointment()">Click Me to Create Appointment!</button>
+    <button onclick="addAttendeeToAppointment()">Click Me to Add Attendee To Appointment!</button>
+    <button onclick="extendAppointmentEndTime()">Click Me to Extend Appointment!</button>
+    <button onclick="endAppointment()">Click Me to End Appointment!</button>
+    <button onclick="getAppointmentsForCourses()">Click Me to getAppointmentsForCourses!</button>
+    <button onclick="getCoursesForStudent()">Click Me to getCoursesForStudent!</button>
+    <button onclick="getAttendingStudents()">Click Me to getAttendingStudents!</button> -->
+    <script>
+
+        async function login() {
+
+        }
+
+        async function createStudent() {
+            const res = await fetch('/create_student/', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: "Biggus Dickus",
+                    email: "bdickus@umass.edu",
+                    password: "123456",
+                })
+            })
+            console.log(await res.text())
+        }
+
+        async function createCourse() {
+            const res = await fetch('/create_course/', {
+                method: 'POST'
+            })
+            console.log(await res.text())
+        }
+
+        async function setCoursesForStudent() {
+            const res = await fetch('/set_courses_for_student/', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    student_id: 2,
+                    course_ids: [2, 3]
+                })
+            })
+            console.log("setCoursesForStudent")
+        }
+
+        async function createAppointment() {
+            const res = await fetch('/create_appointment/', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    creator_student_id: 5,
+                    start_time: "test start time",
+                    end_time: "test end time",
+                    course_id: 2,
+                    additional_info: "YOU GOTS TA LOCK THE FUCK IN",
+                    location: "yo mama's house"
+                })
+            })
+            console.log(await res.text())
+        }
+
+        async function addAttendeeToAppointment() {
+            const res = await fetch('/add_attendee_to_appointment/?appt_id=3&st_id=6', {
+                method: 'POST',
+            })
+            console.log('addAttendeeToAppointment')
+
+        }
+
+        async function extendAppointmentEndTime() {
+            const res = await fetch('/extend_appointment_end_time/?appt_id=1&new_end_time=2025-12-08 00:00:00', {
+                method: 'POST',
+            })
+            console.log('extendAppointmentEndTime')
+
+        }
+
+        async function endAppointment() {
+            const res = await fetch('/end_appointment/1', {
+                method: 'POST',
+            })
+            console.log('endAppointment')
+        }
+
+        async function getAppointmentsForCourses() {
+            const res = await fetch('/get_appointments_for_course/1')
+            console.log(await res.json())
+            const res1 = await fetch('/get_appointments_for_course/2')
+            console.log(await res1.json())
+        }
+
+        async function getCoursesForStudent() {
+            const res = await fetch('/get_courses_for_student/2')
+            console.log(await res.json())
+            const res1 = await fetch('/get_courses_for_student/3')
+            console.log(await res1.json())
+        }
+
+        async function getAttendingStudents() {
+            const res = await fetch('/get_attending_students/2')
+            console.log(await res.json())
+            const res1 = await fetch('/get_attending_students/1')
+            console.log(await res1.json())
+        }
+    </script>
+</body>
+
+</html>

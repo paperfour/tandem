@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        form {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.6rem;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .result {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #333;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="loginForm">
+        <h2>Login</h2>
+        <label>Email</label>
+        <input type="text" name="username" placeholder="alice@example.com" required />
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="••••••••" required />
+
+        <button type="submit">Log In</button>
+
+        <div class="result" id="result"></div>
+    </form>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const result = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log("FORM SUBMITTED")
+            const formData = new FormData(form);
+
+            try {
+                const res = await fetch('/auth/login', {
+                    method: 'POST',
+                    body: new URLSearchParams(formData),
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    result.innerHTML = `<b>Access Token:</b> ${data.access_token}<br><b>Refresh Token:</b> ${data.refresh_token}`;
+                    localStorage.setItem('access_token', data.access_token);
+                } else {
+                    result.textContent = data.detail || 'Login failed';
+                }
+            } catch (err) {
+                result.textContent = 'Error: ' + err.message;
+            }
+        });
+    </script>
+</body>
+
+</html>
