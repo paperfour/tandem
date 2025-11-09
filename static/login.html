@@ -107,6 +107,18 @@
                 result.textContent = 'Error: ' + err.message;
             }
         });
+
+        const res = await fetch("http://127.0.0.1:8000/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: "alice@example.com",
+                password: "password123"
+            })
+        });
+        const data = await res.json();
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
     </script>
 </body>
 

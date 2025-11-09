@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FastAPI App Tester</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f7fa;
+    margin: 20px;
+  }
+  h2 { border-bottom: 2px solid #444; padding-bottom: 5px; }
+  section {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  label { display: block; margin-top: 5px; }
+  input, textarea {
+    width: 100%;
+    padding: 5px;
+    margin-top: 3px;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 10px;
+    padding: 8px 14px;
+    background: #0078ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { background: #005fcc; }
+  pre {
+    background: #eee;
+    padding: 10px;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+</style>
+</head>
+<body>
+<h1>FastAPI App Tester</h1>
+<p>Use this page to test all endpoints interactively. Results print below each button.</p>
+
+<hr>
+
+<section id="create-student">
+  <h2>Create Student</h2>
+  <label>Name: <input id="student-name"></label>
+  <label>Email: <input id="student-email"></label>
+  <label>Password: <input id="student-password" type="password"></label>
+  <button onclick="createStudent()">Create</button>
+  <pre id="create-student-result"></pre>
+</section>
+
+<section id="login">
+  <h2>Login</h2>
+  <label>Email (username): <input id="login-email"></label>
+  <label>Password: <input id="login-password" type="password"></label>
+  <button onclick="login()">Login</button>
+  <pre id="login-result"></pre>
+</section>
+
+<section id="refresh">
+  <h2>Refresh Token</h2>
+  <label>Refresh Token: <input id="refresh-token"></label>
+  <button onclick="refreshToken()">Refresh</button>
+  <pre id="refresh-result"></pre>
+</section>
+
+<section id="courses">
+  <h2>Courses</h2>
+  <label>Course IDs (comma-separated): <input id="course-ids"></label>
+  <button onclick="setCourses()">Set Courses for Student</button>
+  <br>
+  <label>Course ID: <input id="single-course-id"></label>
+  <button onclick="addCourse()">Add Course</button>
+  <button onclick="removeCourse()">Remove Course</button>
+  <button onclick="getCourses()">Get Courses</button>
+  <pre id="courses-result"></pre>
+</section>
+
+<section id="appointments">
+  <h2>Appointments</h2>
+  <label>Course ID: <input id="appt-course-id"></label>
+  <label>Start Time (ISO 8601): <input id="appt-start"></label>
+  <label>End Time (ISO 8601): <input id="appt-end"></label>
+  <label>Location: <input id="appt-location"></label>
+  <label>Additional Info: <textarea id="appt-info"></textarea></label>
+  <button onclick="createAppointment()">Create Appointment</button>
+  <br>
+  <label>Appointment ID: <input id="appt-id"></label>
+  <button onclick="joinAppointment()">Join</button>
+  <button onclick="leaveAppointment()">Leave</button>
+  <button onclick="endAppointment()">End Appointment</button>
+  <pre id="appointment-result"></pre>
+</section>
+
+<section id="database">
+  <h2>Live Database Viewer</h2>
+  <p>Automatically refreshes every <span id="refresh-seconds">5</span> seconds.</p>
+  <button onclick="toggleAutoRefresh()">⏯️ Toggle Auto-Refresh</button>
+  <button onclick="getDatabase()">🔄 Manual Refresh</button>
+
+  <div id="db-container" style="margin-top:15px;">
+    <div id="students-table"></div>
+    <div id="courses-table"></div>
+    <div id="appointments-table"></div>
+  </div>
+</section>
+
+<script>
+let accessToken = null;
+let refreshTokenValue = null;
+
+function showResult(id, data) {
+  document.getElementById(id).textContent = JSON.stringify(data, null, 2);
+}
+
+async function getDatabase() {
+  const res = await fetch('/debug/db_all', {
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  const data = await res.json();
+  showResult('db-result', data);
+}
+
+async function createStudent() {
+  const res = await fetch('/create_student/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: document.getElementById('student-name').value,
+      email: document.getElementById('student-email').value,
+      password: document.getElementById('student-password').value
+    })
+  });
+  showResult('create-student-result', await res.json());
+}
+
+async function login() {
+  const formData = new URLSearchParams();
+  formData.append('username', document.getElementById('login-email').value);
+  formData.append('password', document.getElementById('login-password').value);
+  const res = await fetch('/auth/login', {
+    method: 'POST',
+    body: formData
+  });
+  const data = await res.json();
+  if (data.access_token) {
+    accessToken = data.access_token;
+    refreshTokenValue = data.refresh_token;
+    document.getElementById('refresh-token').value = refreshTokenValue;
+  }
+  showResult('login-result', data);
+}
+
+async function refreshToken() {
+  const formData = new URLSearchParams();
+  formData.append('refresh_token', document.getElementById('refresh-token').value);
+  const res = await fetch('/auth/refresh', {
+    method: 'POST',
+    body: formData
+  });
+  const data = await res.json();
+  if (data.access_token) accessToken = data.access_token;
+  showResult('refresh-result', data);
+}
+
+async function setCourses() {
+  const ids = document.getElementById('course-ids').value.split(',').map(i => parseInt(i.trim())).filter(Boolean);
+  const res = await fetch('/set_courses_for_student/', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ course_ids: ids })
+  });
+  showResult('courses-result', await res.json().catch(() => ({status: res.status})));
+}
+
+async function addCourse() {
+  const course_id = document.getElementById('single-course-id').value;
+  const formData = new URLSearchParams();
+  formData.append('course_id', course_id);
+  const res = await fetch('/add_course_for_student/?course_id=' + course_id, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  showResult('courses-result', await res.json().catch(() => ({status: res.status})));
+}
+
+async function removeCourse() {
+  const course_id = document.getElementById('single-course-id').value;
+  const res = await fetch('/remove_course_for_student/?course_id=' + course_id, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  showResult('courses-result', await res.json().catch(() => ({status: res.status})));
+}
+
+async function getCourses() {
+  const res = await fetch('/get_courses_for_student/', {
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  showResult('courses-result', await res.json());
+}
+
+async function createAppointment() {
+  const body = {
+    course_id: parseInt(document.getElementById('appt-course-id').value),
+    start_time: document.getElementById('appt-start').value,
+    end_time: document.getElementById('appt-end').value,
+    location: document.getElementById('appt-location').value,
+    additional_info: document.getElementById('appt-info').value
+  };
+  const res = await fetch('/create_appointment/', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  showResult('appointment-result', await res.json());
+}
+
+async function joinAppointment() {
+  const appt_id = document.getElementById('appt-id').value;
+  const res = await fetch('/join_appointment/?appt_id=' + appt_id, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  showResult('appointment-result', await res.json().catch(() => ({status: res.status})));
+}
+
+async function leaveAppointment() {
+  const appt_id = document.getElementById('appt-id').value;
+  const res = await fetch('/leave_appointment/?appt_id=' + appt_id, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  showResult('appointment-result', await res.json().catch(() => ({status: res.status})));
+}
+
+async function endAppointment() {
+  const res = await fetch('/end_appointment/', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  showResult('appointment-result', await res.json().catch(() => ({status: res.status})));
+}
+
+async function getAppointment() {
+  const id = document.getElementById('fetch-appt-id').value;
+  const res = await fetch(`/appointment/${id}`);
+  showResult('fetch-result', await res.json());
+}
+
+async function getCourse() {
+  const id = document.getElementById('fetch-course-id').value;
+  const res = await fetch(`/course/${id}`);
+  showResult('fetch-result', await res.json());
+}
+
+async function getAppointmentsForCourse() {
+  const id = document.getElementById('fetch-appts-course-id').value;
+  const res = await fetch(`/get_appointments_for_course/${id}`);
+  showResult('fetch-result', await res.json());
+}
+
+async function getAttendees() {
+  const aid = document.getElementById('fetch-attendees-aid').value;
+  const res = await fetch(`/get_attending_students/${aid}`);
+  showResult('fetch-result', await res.json());
+}
+
+let dbRefreshInterval = null;
+const REFRESH_INTERVAL_MS = 1000; // every 5 seconds
+
+function toggleAutoRefresh() {
+  if (dbRefreshInterval) {
+    clearInterval(dbRefreshInterval);
+    dbRefreshInterval = null;
+    alert("Auto-refresh stopped.");
+  } else {
+    dbRefreshInterval = setInterval(getDatabase, REFRESH_INTERVAL_MS);
+    alert("Auto-refresh started.");
+  }
+}
+
+function generateTable(title, data) {
+  console.log(title)
+  console.log(data)
+  if (data === "Unavailable" || !Array.isArray(data) || data.length === 0) {
+    return `<h3>${title}</h3><p><i>No data</i></p>`;
+  }
+
+  const headers = Object.keys(data[0]);
+  const headerRow = headers.map(h => `<th>${h}</th>`).join("");
+  const rows = data.map(row => {
+    const cells = headers.map(h => `<td>${row[h] ?? ""}</td>`).join("");
+    return `<tr>${cells}</tr>`;
+  }).join("");
+
+  return `
+    <h3>${title}</h3>
+    <div style="overflow-x:auto; max-height:300px; border:1px solid #ccc; border-radius:8px; margin-bottom:20px;">
+      <table border="1" cellspacing="0" cellpadding="5" style="border-collapse:collapse; width:100%;">
+        <thead style="background:#eee; position:sticky; top:0;"><tr>${headerRow}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function getDatabase() {
+  try {
+    const res = await fetch('/debug/db_all', {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const data = await res.json();
+    const container = document.getElementById('db-container');
+    container.innerHTML =
+      generateTable("Students", data.students) +
+      generateTable("Appointments", data.appointments) +
+      generateTable("Courses", data.courses);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('db-container').innerHTML = `<p style="color:red;">Failed to fetch database.</p>`;
+  }
+}
+
+// Start auto-refresh on page load
+window.addEventListener('load', () => {
+  getDatabase();
+  dbRefreshInterval = setInterval(getDatabase, REFRESH_INTERVAL_MS);
+});
+
+</script>
+</body>
+</html>

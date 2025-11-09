@@ -54,6 +54,7 @@
     <button onclick="getCoursesForStudent()">Click Me to getCoursesForStudent!</button>
     <button onclick="getAttendingStudents()">Click Me to getAttendingStudents!</button> -->
     <script>
+        fetchWithAuth('/feed', {method: 'GET'})
 
         async function login() {
 
