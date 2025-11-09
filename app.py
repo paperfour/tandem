@@ -6,8 +6,10 @@ from typing import Optional
 
 # app.py
 from fastapi import FastAPI, Request, HTTPException, status, Form, Depends
-from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pathlib import Path
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
@@ -123,7 +125,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")  # expects Bearer t
 
 ### GETTERS/SETTERS - USER ====================================================
 
-
 # Dependency used by protected routes
 def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     payload = decode_token(token, expected_type="access")
@@ -132,6 +133,10 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     if not student_dict or student_dict.get("disabled", False):
         raise HTTPException(status_code=401, detail="Inactive or missing user")
     return {k: v for k, v in student_dict.items() if k != 'hashed_password'}
+
+@app.get('/current_user/')
+async def get_cur_user_endpoint(current_user: dict = Depends(get_current_user)):
+    return current_user
 
 # COURSES
 class CoursesForStudent(BaseModel):
@@ -187,7 +192,7 @@ async def create_appointment(body: NewAppointment, current_user: dict = Depends(
     except:
         raise HTTPException(403, "You are the owner of an existing appointment.")
 
-@app.post('/join_appointment/')
+@app.post('/join_appointment/{appt_id}')
 async def join_appointment(appt_id: int, current_user: dict = Depends(get_current_user)):
     try:
         st_id = current_user['id']
@@ -197,7 +202,6 @@ async def join_appointment(appt_id: int, current_user: dict = Depends(get_curren
 
 @app.post('/leave_appointment/')
 async def leave_appointment(current_user: dict = Depends(get_current_user)):
-
     st_id = current_user['id']
     appt_dict = db_utils.get_student_appointment(st_id)
 
@@ -232,8 +236,11 @@ async def end_appointment(current_user: dict = Depends(get_current_user)):
     db_utils.end_appointment(appt_dict['id'])
 
 
+
 @app.get('/feed')
 async def get_student_feed(current_user: dict = Depends(get_current_user)):
+    db_utils.clear_hanging_appointments()
+
     st_id = current_user['id']
 
     student_courses = db_utils.get_courses_for_student(st_id)
@@ -245,13 +252,26 @@ async def get_student_feed(current_user: dict = Depends(get_current_user)):
     
     return appointments
 
+
 #  ===========================================================================
 
-@app.get("/", response_class=FileResponse)
-async def serve_homepage(request: Request):
-    # Serve the HTML file from the static folder
-    print(f"Somebody joined our main page at {request.client.host}")
-    return FileResponse("static/index.html")
+BASE_DIR  = Path(__file__).parent.resolve()
+HTML_DIR  = BASE_DIR / "html"
+CSS_DIR   = BASE_DIR / "css"
+JS_DIR    = BASE_DIR / "js"
+IMG_DIR    = BASE_DIR / "IMG"
+
+app.mount("/css", StaticFiles(directory=CSS_DIR), name="css")
+app.mount("/js",  StaticFiles(directory=JS_DIR),  name="js")
+app.mount("/html",  StaticFiles(directory=HTML_DIR), name="html")
+app.mount("/IMG",  StaticFiles(directory=IMG_DIR), name="IMG")
+
+@app.get("/")
+async def root():
+    index = HTML_DIR / "index.html"
+    if index.exists():
+        return FileResponse(index, media_type="text/html; charset=utf-8")
+    raise HTTPException(404, detail="/html/index.html not found")
 
 @app.get("/login", response_class=FileResponse)
 async def login_page(request: Request):
@@ -261,14 +281,13 @@ async def login_page(request: Request):
 async def login_page(request: Request):
     return FileResponse("static/tests.html")
 
-
 @app.get("/appointment/{appt_id}")
 async def get_appointment_dict(appt_id: int):
     appt_dict = db_utils.get_appointment_dict(appt_id)
     return appt_dict
 
 @app.get("/course/{course_id}")
-async def get_course(course_id: int):
+async def get_course_dict(course_id: int):
     course_dict = db_utils.get_course_dict(course_id)
     return course_dict
 
@@ -291,7 +310,20 @@ async def get_attending_students(aid: int):
         return (attendees)
     except ValueError:
         raise HTTPException(status_code=404, detail=f"No appointment with ID {aid}")
+    
+@app.get('/get_creator/{aid}')
+async def get_creator(aid: int):
+    try:
+        creator = db_utils.get_creator(aid)
+        return (creator)
+    except ValueError:
+        raise HTTPException(status_code=404, detail=f"No appointment with ID {aid}")
 
+@app.get('/all_courses')
+async def all_courses():
+    return [{
+        k: v for k, v in c.items() if k != 'students'
+    } for c in db_utils.get_all_courses()]
 
 @app.get("/debug/db_all")
 async def debug_db_all():
@@ -323,6 +355,7 @@ async def debug_db_all():
 
 import socket
 if __name__ == "__main__":
+
     hostname = socket.gethostname()
     ip_address = socket.gethostbyname(hostname)
     print(f"Join up in {ip_address}")

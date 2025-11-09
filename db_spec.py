@@ -79,9 +79,8 @@ class Appointment(Base):
             "end_time": self.end_time,
             "additional_info": self.additional_info,
             "location": self.location,
-            "attendees": [x.id for x in self.attendees]
+            "attendees": [x.id for x in self.attendees],
         }
-
 
     # Convenience relationships
     creator = relationship("Student", foreign_keys=[creator_student_id])
@@ -90,8 +89,8 @@ class Appointment(Base):
 from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
-def build_and_seed(db_path: Path = DB_FILE):
 
+def build_and_seed(db_path: Path = DB_FILE):
     if db_path.exists():
         db_path.unlink()
 

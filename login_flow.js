@@ -1,4 +1,4 @@
-const LOGIN_URL = "/login.html"
+const LOGIN_URL = "/html/login.html"
 
 function getTokens() {
     const access = localStorage.getItem("access_token");

@@ -128,6 +128,7 @@ def create_appointment(
     Returns appointment id.
     """
     with session_scope() as s:
+        
         creator = _get_student(s, creator_student_id)
         course = _get_course(s, course_id) if course_id is not None else None
 
@@ -139,10 +140,11 @@ def create_appointment(
             location=location,
             additional_info=additional_info,
         )
-        s.add(appt)
+        s.add(appt)     
         s.flush()  # assign appt.id
 
         if creator.appointment_id and creator.appointment_id != appt.id:
+            # print('FUCL')
             raise ValueError(f"Student {creator.id} already attends appointment {creator.appointment_id}.")
         creator.appointment_id = appt.id
 
@@ -196,9 +198,19 @@ def end_appointment(appointment_id: int) -> None:
             print(st)
             st.appointment_id = None
 
+        s.delete(appt)
         # commit handled by context manager
-
 # --- Additional read utilities ---
+
+def clear_hanging_appointments():
+    with session_scope() as s:
+        # appt = _get_appointment(s, aid)
+        appts = s.query(Appointment).all()
+        for appt in appts:
+            creator = _get_student(s, appt.creator.id)
+
+            if creator.appointment_id != appt.id:
+                s.delete(appt)
 
 from sqlalchemy import select, func
 
@@ -217,6 +229,7 @@ def get_appointments_for_course(course_id: int) -> list[dict]:
         )
         rows = s.scalars(stmt).all()
         return [a.to_dict() for a in rows]
+    
 
 def get_courses_for_student(student_id: int) -> list[dict]:
     """
@@ -230,14 +243,19 @@ def get_courses_for_student(student_id: int) -> list[dict]:
 def get_attending_students(appointment_id: int) -> list[dict]:
     """
     Return all students attending an appointment.
-    [
-      {id, name, email}
-    ]
     """
     with session_scope() as s:
         appt = _get_appointment(s, appointment_id)
         # appt.attendees is the ORM one-to-many via Student.appointment_id
         return [st.to_dict() for st in appt.attendees]
+    
+def get_creator(appointment_id: int) -> list[dict]:
+    """
+    Return the creator of an appointment.
+    """
+    with session_scope() as s:
+        appt = _get_appointment(s, appointment_id)
+        return appt.creator.to_dict()
 
 def get_student_from_email(email_to_search: str):
     with session_scope() as s:

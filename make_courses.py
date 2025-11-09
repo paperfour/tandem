@@ -20,3 +20,4 @@ with Session(engine) as session:
     session.add_all(courses)
     session.flush()
     session.commit()
+
