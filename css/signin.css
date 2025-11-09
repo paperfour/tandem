@@ -1,0 +1,29 @@
+.input-box {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.2s ease;
+}
+
+.input-box:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary {
+    background-color: #2563eb;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 10px 0;
+    transition: background-color 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: #1e40af;
+}
