@@ -10,133 +10,19 @@ from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel
 
 import db_utils
-from output_db_contents import appointment_str
+
 from pydantic import BaseModel
+from new_bodies import NewStudent, NewAppointment, NewCourse
 import uvicorn
 import json
 
 app = FastAPI()
 
-@app.get("/", response_class=FileResponse)
-async def serve_homepage(request: Request):
-    # Serve the HTML file from the static folder
-    print(f"Somebody joined at {request.client.host}")
-    return FileResponse("static/index.html")
+### LOGIN MECHANISM =======================================================================
 
-@app.get("/goodbye")
-async def goodbye(request: Request):
-    client_host = request.client.host
-    print(f"🟢 Connection to '/goodbye' from {client_host}")
-    return {"message": "Goodbye, world!"}
-
-@app.get("/login")
-async def login_page(request: Request):
-    return FileResponse("static/login.html")
-
-
-
-@app.get("/appointment/{appt_id}")
-async def get_appointment_dict(appt_id: int):
-    appt_dict = db_utils.get_appointment_dict(appt_id)
-    return appt_dict
-
-@app.get("/course/{course_id}")
-async def get_course(course_id: int):
-    course_dict = db_utils.get_course_dict(course_id)
-    return course_dict
-
-@app.get("/student/{student_id}")
-async def get_student(student_id: int):
-    student_dict = db_utils.get_student_dict(student_id)
-    return student_dict
-
-class NewStudent(BaseModel):
-    name: str
-    email: str
-    password: str
-
-@app.post("/create_student/")
-async def create_student(body: NewStudent):
-    student_id = db_utils.create_student(body.name, body.email, body.password)
-    print(student_id)
-    return student_id
-
-@app.post("/create_course/")
-async def create_course():
-    course_id = db_utils.create_course('COMPSCI 240', 'Reasoning Under Uncertainty', "Jack Hughes")
-    return course_id
-
-class CoursesForStudent(BaseModel):
-    student_id: int
-    course_ids: list[int]
-
-@app.post('/set_courses_for_student/')
-async def set_courses_for_student(body: CoursesForStudent):
-    db_utils.set_courses_for_student(body.student_id, body.course_ids)
-
-class AppointmentBody(BaseModel):
-    creator_student_id: int
-    start_time: str
-    end_time: str
-    course_id: int 
-    additional_info: None|str = None
-    location: None|str = None
-    add_creator_as_attendee: bool = True
-
-@app.post('/create_appointment/')
-async def create_appointment(body: AppointmentBody):
-    aid = db_utils.create_appointment(
-        body.creator_student_id,
-        body.course_id,
-        body.start_time,
-        body.end_time,
-        body.additional_info,
-        body.location,
-        body.add_creator_as_attendee,
-    )
-    return aid
-
-@app.post('/add_attendee_to_appointment/')
-async def add_attendee_to_appointment(appt_id: int, st_id: int):
-    db_utils.add_attendee_to_appointment(appt_id, st_id)
-
-@app.post('/extend_appointment_end_time/')
-async def extend_appointment_end_time(appt_id: int, new_end_time: str):
-    db_utils.extend_appointment_end_time(appt_id, new_end_time)
-
-@app.post('/end_appointment/{appt_id}')
-async def end_appointment(appt_id: int):
-    db_utils.end_appointment(appt_id)
-
-class Courses(BaseModel):
-    course_ids: list[int]
-
-@app.get('/get_appointments_for_course/{id}')
-async def get_appointments_for_courses(id: int):
-    appointments = db_utils.get_appointments_for_course(id)
-    return json.dumps(appointments)
-
-@app.get('/get_courses_for_student/{id}')
-async def get_courses_for_student(id: int):
-    courses = db_utils.get_courses_for_student(id)
-    return json.dumps(courses)
-
-@app.get('/get_attending_students/{aid}')
-async def get_attending_students(aid: int):
-    try:
-        attendees = db_utils.get_attending_students(aid)
-        return json.dumps(attendees)
-    except ValueError:
-        raise HTTPException(status_code=404, detail=f"No appointment with ID {aid}")
-
-### LOGIN MECHANISM ###
-
-# -------------------------
 # Settings (use env vars in real apps)
-# -------------------------
 SECRET_KEY = "change-me-very-secret"         # os.environ["SECRET_KEY"]
 REFRESH_SECRET_KEY = "change-me-refresh"     # os.environ["REFRESH_SECRET_KEY"]
 ALGORITHM = "HS256"
@@ -156,9 +42,7 @@ class TokenPayload(BaseModel):
     type: str
     exp: int
 
-# -------------------------
 # Helpers
-# -------------------------
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -200,6 +84,7 @@ def decode_token(token: str, expected_type: str) -> TokenPayload:
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
+# Requests
 @app.post("/auth/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     """
@@ -236,6 +121,9 @@ def refresh(access_token: Optional[str] = Form(default=None),
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")  # expects Bearer token
 
+### GETTERS/SETTERS - USER ====================================================
+
+
 # Dependency used by protected routes
 def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     payload = decode_token(token, expected_type="access")
@@ -245,15 +133,196 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         raise HTTPException(status_code=401, detail="Inactive or missing user")
     return {k: v for k, v in student_dict.items() if k != 'hashed_password'}
 
-# Example of an endpoint locked by login
-@app.get("/me")
-def read_me(current_user: dict = Depends(get_current_user)):
-    return current_user
+# COURSES
+class CoursesForStudent(BaseModel):
+    course_ids: list[int]
+
+@app.post('/set_courses_for_student/')
+async def set_courses_for_student(body: CoursesForStudent, current_user: dict = Depends(get_current_user)):
+    st_id = current_user['id']
+    db_utils.set_courses_for_student(st_id, body.course_ids)
+
+@app.post('/add_course_for_student/')
+async def add_course_for_student(course_id: int, current_user: dict = Depends(get_current_user)):
+    st_id = current_user['id']
+    cur_course_ids = [c['id'] for c in db_utils.get_courses_for_student(st_id)]
+    
+    if course_id in cur_course_ids:
+        raise HTTPException(status_code=403, detail="You're already in the course you're trying to join.")
+    
+    cur_course_ids.append(course_id)
+    db_utils.set_courses_for_student(st_id, cur_course_ids)
+
+@app.post('/remove_course_for_student/')
+async def remove_course_for_student(course_id: int, current_user: dict = Depends(get_current_user)):
+    st_id = current_user['id']
+    cur_course_ids = [c['id'] for c in db_utils.get_courses_for_student(st_id)]
+    
+    if course_id not in cur_course_ids:
+        raise HTTPException(status_code=403, detail="You're not in the course you're trying to leave.")
+    
+    cur_course_ids.remove(course_id)
+    db_utils.set_courses_for_student(st_id, cur_course_ids)
+
+@app.get('/get_courses_for_student/')
+async def get_courses_for_student(current_user: dict = Depends(get_current_user)):
+    st_id = current_user['id']
+    courses = db_utils.get_courses_for_student(st_id)
+    return (courses)
+
+# APPOINTMENTS
+@app.post('/create_appointment/')
+async def create_appointment(body: NewAppointment, current_user: dict = Depends(get_current_user)):
+    try:
+        creator_id = current_user['id']
+        aid = db_utils.create_appointment(
+            creator_id,
+            body.course_id,
+            body.start_time,
+            body.end_time,
+            body.location,
+            body.additional_info,
+        )
+        return aid
+    except:
+        raise HTTPException(403, "You are the owner of an existing appointment.")
+
+@app.post('/join_appointment/')
+async def join_appointment(appt_id: int, current_user: dict = Depends(get_current_user)):
+    try:
+        st_id = current_user['id']
+        db_utils.add_attendee_to_appointment(appt_id, st_id)
+    except ValueError:
+        raise HTTPException(403, detail="You are the owner of an existing appointment.")
+
+@app.post('/leave_appointment/')
+async def leave_appointment(current_user: dict = Depends(get_current_user)):
+
+    st_id = current_user['id']
+    appt_dict = db_utils.get_student_appointment(st_id)
+
+    if appt_dict['creator_student_id'] == st_id:
+        raise HTTPException(status_code=403, detail="You can't leave an appointment you created. End the appointment instead")
+    db_utils.remove_attendee_from_appointment(appt_dict['id'], st_id)
+    
+@app.post('/edit_appointment/')
+async def edit_appointment(body: NewAppointment, current_user: dict = Depends(get_current_user)):
+    st_id = current_user['id']
+    appt_dict = db_utils.get_student_appointment(st_id)
+
+    if st_id != appt_dict['creator_student_id']:
+        raise HTTPException(status_code=403, detail="You are not the owner of this appointment")
+    
+    db_utils.edit_appointment(
+        appt_dict['id'], 
+        body.start_time,
+        body.end_time,
+        body.location,
+        body.additional_info,
+    )
+
+@app.post('/end_appointment/')
+async def end_appointment(current_user: dict = Depends(get_current_user)):
+    st_id = current_user['id']
+    appt_dict = db_utils.get_student_appointment(st_id)
+
+    if appt_dict['creator_student_id'] != st_id:
+        raise HTTPException(status_code=403, detail="You do not own this appointment")
+
+    db_utils.end_appointment(appt_dict['id'])
+
+
+@app.get('/feed')
+async def get_student_feed(current_user: dict = Depends(get_current_user)):
+    st_id = current_user['id']
+
+    student_courses = db_utils.get_courses_for_student(st_id)
+    
+    appointments = []
+    for c in student_courses:
+        c_id = c['id']
+        appointments += db_utils.get_appointments_for_course(c_id)
+    
+    return appointments
+
+#  ===========================================================================
+
+@app.get("/", response_class=FileResponse)
+async def serve_homepage(request: Request):
+    # Serve the HTML file from the static folder
+    print(f"Somebody joined our main page at {request.client.host}")
+    return FileResponse("static/index.html")
+
+@app.get("/login", response_class=FileResponse)
+async def login_page(request: Request):
+    return FileResponse("static/login.html")
+
+@app.get("/tests", response_class=FileResponse)
+async def login_page(request: Request):
+    return FileResponse("static/tests.html")
+
+
+@app.get("/appointment/{appt_id}")
+async def get_appointment_dict(appt_id: int):
+    appt_dict = db_utils.get_appointment_dict(appt_id)
+    return appt_dict
+
+@app.get("/course/{course_id}")
+async def get_course(course_id: int):
+    course_dict = db_utils.get_course_dict(course_id)
+    return course_dict
+
+# * Not Authed
+@app.post("/create_student/")
+async def create_student(body: NewStudent):
+    student_id = db_utils.create_student(body.name, body.email, body.password)
+    print(student_id)
+    return student_id
+
+@app.get('/get_appointments_for_course/{id}')
+async def get_appointments_for_courses(id: int):
+    appointments = db_utils.get_appointments_for_course(id)
+    return (appointments)
+
+@app.get('/get_attending_students/{aid}')
+async def get_attending_students(aid: int):
+    try:
+        attendees = db_utils.get_attending_students(aid)
+        return (attendees)
+    except ValueError:
+        raise HTTPException(status_code=404, detail=f"No appointment with ID {aid}")
+
+
+@app.get("/debug/db_all")
+async def debug_db_all():
+    """
+    Returns a snapshot of all major tables.
+    This is for testing only — remove or protect it in production.
+    """
+    try:
+        students = db_utils.get_all_students()
+    except Exception:
+        students = "Unavailable"
+
+    try:
+        courses = db_utils.get_all_courses()
+    except Exception:
+        courses = "Unavailable"
+
+    try:
+        appointments = db_utils.get_all_appointments()
+    except Exception:
+        appointments = "Unavailable"
+
+    return {
+        "students": students,
+        "appointments": appointments,
+        "courses": courses
+    }
+
 
 import socket
-
 if __name__ == "__main__":
-
     hostname = socket.gethostname()
     ip_address = socket.gethostbyname(hostname)
     print(f"Join up in {ip_address}")

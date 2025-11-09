@@ -1,10 +1,10 @@
-# utils_sa.py
+
 from contextlib import contextmanager
 from typing import Iterable, Sequence, Optional
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from db_spec import Base, Student, Course, Appointment
+from db_spec import Student, Course, Appointment
 from engine import get_engine
 
 engine = get_engine()
@@ -47,6 +47,18 @@ def get_appointment_dict(appt_id: int) -> dict:
     with session_scope() as s:
         a = _get_appointment(s, appt_id)
         return a.to_dict()
+    
+def get_student_appointment(student_id: int) -> dict | None:
+    with session_scope() as s:
+        
+        appt_id = get_student_dict(student_id)["appointment_id"]
+        try:
+            appt_dict = get_appointment_dict(appt_id)
+        except:
+            _get_student(s, student_id).appointment_id = None
+            return None
+
+        return appt_dict
 
 def get_student_dict(student_id: int) -> dict:
     with session_scope() as s:
@@ -107,9 +119,8 @@ def create_appointment(
     course_id: int,
     start_time: str,
     end_time: str,
+    location: str,
     additional_info: Optional[str],
-    location: Optional[str],
-    add_creator_as_attendee: bool = True,
 ) -> int:
     """
     Create an appointment. Optionally adds the creator as attendee
@@ -125,16 +136,15 @@ def create_appointment(
             course=course,
             start_time=start_time,
             end_time=end_time,
-            additional_info=additional_info or None,
-            location=location or None,
+            location=location,
+            additional_info=additional_info,
         )
         s.add(appt)
         s.flush()  # assign appt.id
 
-        if add_creator_as_attendee:
-            if creator.appointment_id and creator.appointment_id != appt.id:
-                raise ValueError(f"Student {creator.id} already attends appointment {creator.appointment_id}.")
-            creator.appointment_id = appt.id
+        if creator.appointment_id and creator.appointment_id != appt.id:
+            raise ValueError(f"Student {creator.id} already attends appointment {creator.appointment_id}.")
+        creator.appointment_id = appt.id
 
         return appt.id
 
@@ -148,11 +158,30 @@ def add_attendee_to_appointment(appointment_id: int, student_id: int) -> None:
             raise ValueError(f"Student {student_id} already attends appointment {st.appointment_id}.")
         st.appointment_id = appt.id  # links via FK
 
-def extend_appointment_end_time(appointment_id: int, new_end_time: str) -> None:
+def remove_attendee_from_appointment(appointment_id: int, student_id: int) -> None:
+    """Assign the student to attend the given appointment. Enforces at most one appointment per student."""
+    with session_scope() as s:
+        appt = _get_course(s, appointment_id)
+        st = _get_student(s, student_id)
+
+        if st.appointment_id and st.appointment_id != appt.id:
+            raise ValueError(f"Student {student_id} doesn't seem to be attending {st.appointment_id}.")
+        st.appointment_id = None  # links via FK
+
+def edit_appointment(
+    appointment_id: int,     
+    start_time: str,
+    end_time: str,
+    location: str,
+    additional_info: Optional[str],
+) -> None:
     """Set a later end_time for the appointment."""
     with session_scope() as s:
         appt = _get_appointment(s, appointment_id)
-        appt.end_time = new_end_time
+        appt.start_time = start_time
+        appt.end_time = end_time
+        appt.additional_info = additional_info
+        appt.location = location
 
 def end_appointment(appointment_id: int) -> None:
     """
@@ -161,12 +190,12 @@ def end_appointment(appointment_id: int) -> None:
     """
     with session_scope() as s:
         appt = _get_appointment(s, appointment_id)
-
+    
         # Detach attendees for safety (ORM-level), regardless of ON DELETE SET NULL
         for st in list(appt.attendees):
+            print(st)
             st.appointment_id = None
 
-        s.delete(appt)
         # commit handled by context manager
 
 # --- Additional read utilities ---
@@ -218,3 +247,17 @@ def get_student_from_email(email_to_search: str):
 
         dct = st.to_dict()
         return dct
+    
+
+# DEBUG ONLY
+def get_all_students():
+    with session_scope() as s:
+        return [stud.to_dict() for stud in s.query(Student).all()]
+
+def get_all_appointments():
+    with session_scope() as s:
+        return [appt.to_dict() for appt in s.query(Appointment).all()]
+    
+def get_all_courses():
+    with session_scope() as s:
+        return [course.to_dict() for course in s.query(Course).all()]

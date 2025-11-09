@@ -17,7 +17,7 @@ def student_str(s: Student):
     return res
 
 def course_str(c: Course):
-    return (f"{c.id}: {c.code} - {c.name} (Instructor: {c.instructor})") \
+    return (f"{c.id}: {c.code} - {c.name}") \
     + "  Students:" + ", ".join(s.name for s in c.students)
 
 def print_contents(engine: Engine):

@@ -46,14 +46,12 @@ class Course(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     code = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
-    instructor = Column(String)
 
     def to_dict(self):
         return {
             "id": self.id,
             "code": self.code,
             "name": self.name,
-            "instructor": self.instructor,
             "students": [st.id for st in self.students]
         }
 
@@ -66,7 +64,7 @@ class Appointment(Base):
     course_id = Column(Integer, ForeignKey("courses.id", ondelete="SET NULL"), nullable=True)
     start_time = Column(String)       # store as ISO-8601 TEXT
     end_time = Column(String)
-    additional_info = Column(Text)
+    additional_info = Column(Text, nullable=True)
     location = Column(String)
 
     # One-to-many via students.appointment_id
@@ -93,6 +91,7 @@ from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 def build_and_seed(db_path: Path = DB_FILE):
+
     if db_path.exists():
         db_path.unlink()
 
@@ -100,30 +99,30 @@ def build_and_seed(db_path: Path = DB_FILE):
     Base.metadata.create_all(engine)
 
     # Seed with your mock example
-    with Session(engine) as session:
-        jason = Student(name="Jason Lee", email="jasonlee@umass.edu", hashed_password=pwd_context.hash("password"))
-        course = Course(code="POLISCI 273", name="Power", instructor="Andrew March")
+    # with Session(engine) as session:
+    #     jason = Student(name="Jason Lee", email="jasonlee@umass.edu", hashed_password=pwd_context.hash("password"))
+    #     course = Course(code="POLISCI 273", name="Power")
 
-        # Link student <-> course (MTM)
-        jason.courses.append(course)
-        session.add_all([jason, course])
-        session.flush()  # get IDs
+    #     # Link student <-> course (MTM)
+    #     jason.courses.append(course)
+    #     session.add_all([jason, course])
+    #     session.flush()  # get IDs
 
-        appt = Appointment(
-            creator_student_id=jason.id,
-            course=course,
-            start_time="2025-11-07 21:30:00",
-            end_time="2025-11-07 22:30:00",
-            additional_info="Don't pull up unless you locked!",
-            location="W.E.B DuBois Library, Floor 21",
-        )
-        session.add(appt)
-        session.flush()
+    #     appt = Appointment(
+    #         creator_student_id=jason.id,
+    #         course=course,
+    #         start_time="2025-11-07 21:30:00",
+    #         end_time="2025-11-07 22:30:00",
+    #         additional_info="Don't pull up unless you locked!",
+    #         location="W.E.B DuBois Library, Floor 21",
+    #     )
+    #     session.add(appt)
+    #     session.flush()
 
-        # Student attends exactly this one appointment
-        jason.appointment = appt
+    #     # Student attends exactly this one appointment
+    #     jason.appointment = appt
 
-        session.commit()
+    #     session.commit()
 
     print(f"Created {db_path.resolve()}")
 
