@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In | Tandem</title>
+    <link rel="stylesheet" href="/css/signin.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="/js/signin.js"></script>
+    <script defer src="/js/auth.js"></script>
+      <link rel="icon" type="image/png" href="/IMG/tabemoji.png">
+
+</head>
+
+<body class="font-sans antialiased flex flex-col justify-center items-center min-h-screen"
+    style="background-color: #f7fce9;">
+
+    <!-- Center Wrapper -->
+    <div class="flex flex-col items-center justify-center space-y-6">
+        <!-- Logo -->
+        <div class="flex items-center justify-center cursor-pointer">
+            <img src="/IMG/logo.png" alt="Tandem logo" class="h-20 w-auto object-contain" />
+        </div>
+
+        <!-- Sign In box -->
+        <div class="w-full max-w-md bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Sign In</h2>
+
+            <form id="signinForm" class="space-y-4">
+                <input type="email" id="email" placeholder="Email" required class="input-box w-full" />
+                <input type="password" id="password" placeholder="Password" required class="input-box w-full" />
+
+                <button type="submit"
+                    class="w-full bg-[#6da400] text-white font-medium py-2 rounded-md hover:bg-[#84b82d] transition">
+                    Sign In
+                </button>
+            </form>
+
+            <p class="text-sm text-gray-600 mt-4">
+                Don’t have an account?
+                <a href="/html/signup.html" class="text-[#527500] hover:underline font-medium">Sign Up</a>
+            </p>
+        </div>
+    </div>
+
+    <div>
+        <a href="/html/index.html" class="text-sm hover:underline">Back to Homepage</a>
+    </div>
+
+    <!-- Dev Shortcut -->
+    <div>
+        <a href="/html/feed.html" class="text-sm hover:underline">Go to Main</a>
+    </div>
+</body>
+
+</html>

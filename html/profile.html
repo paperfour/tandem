@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+      <link rel="icon" type="image/png" href="/IMG/tabemoji.png">
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fa;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .profile-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e0e4e7;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            max-width: 700px;
+            width: 100%;
+            padding: 24px;
+        }
+
+        /* --- Back Link --- */
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Header Section --- */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* NEW: Pushes button to the right */
+            gap: 20px;
+            border-bottom: 1px solid #e0e4e7;
+            padding-bottom: 20px;
+        }
+
+        /* Wrapper for avatar and name */
+        .profile-identity {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 32px;
+            background-color: #4a89dc;
+            /* Alex's color */
+            flex-shrink: 0;
+        }
+
+        .header-info h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #1a202c;
+        }
+
+        .header-info p {
+            margin: 4px 0 0;
+            font-size: 16px;
+            color: #6a7785;
+        }
+
+        /* NEW: Style for the "Call to Action" button */
+        .cta-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .cta-button:hover {
+            background-color: #2563eb;
+        }
+
+        /* --- Main Content Section --- */
+        .profile-content {
+            padding-top: 20px;
+        }
+
+        .profile-section {
+            margin-bottom: 24px;
+        }
+
+        .profile-section h2 {
+            font-size: 18px;
+            color: #1a202c;
+            border-bottom: 1px solid #e0e4e7;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+
+        /* --- Course List --- */
+        .course-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .course-list li {
+            background-color: #f8fafd;
+            border: 1px solid #dbe8fb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c5282;
+
+            /* NEW: Adds a nice transition for the hover effect */
+            transition: all 0.2s ease;
+        }
+
+        /* NEW: Makes the list interactive on hover */
+        .course-list li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(45, 55, 72, 0.05);
+            background-color: #ffffff;
+        }
+    </style>
+    <script defer src="/js/auth.js"></script>
+    <script defer src="/js/util.js"></script>
+    <script defer src="/js/profile.js"></script>
+</head>
+
+<body>
+
+    <div class="profile-container">
+
+        <a href="/html/feed.html" class="back-link">&larr; Back to feed </a>
+
+        <div class="profile-header">
+            <div class="profile-identity">
+                <div class="avatar">--</div>
+                <div class="header-info">
+                    <h1>Loading name...</h1>
+                    <!-- <p>Sophomore • Computer Science</p> -->
+                </div>
+            </div>
+
+        </div>
+
+        <div class="profile-content">
+
+            <!-- <div class="profile-section">
+                <h2>About Me</h2>
+                <p>
+                    This is where i can write what im all about
+                </p>
+            </div> -->
+
+            <div class="profile-section">
+                <h2>Current Courses (Fall 2025)</h2>
+
+                <ul class="course-list" id="profileCourseList">
+                    <!-- Courses will be populated by JavaScript -->
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Function to populate courses from localStorage
+    </script>
+</body>
+
+</html>

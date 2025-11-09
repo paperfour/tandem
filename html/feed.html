@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Feeds - Study Buddy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- We'll use the same font as your other page -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+
+  </script>
+  <script defer src="/js/auth.js"></script>
+  <script defer src="/js/util.js"></script>
+  <script defer src="/js/feed.js"></script>
+
+  <!-- <script src="/js/notifications.js"></script> -->
+</head>
+
+<body class="bg-gray-50 min-h-screen font-sans">
+
+  <!-- HEADER: LOGGED IN -->
+  <nav class="shadow-sm border-b border-gray-200 relative" style="background-color: #f6fce8;">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-3 items-center h-20">
+
+        <!-- Left: Logo -->
+        <div class="flex items-center gap-3 cursor-pointer justify-start" onclick="location.reload()">
+          <img src="/IMG/logo.png" alt="Tandem logo" class="h-20 w-auto object-contain" />
+        </div>
+
+        <!-- Center: Nav icons -->
+        <div class="flex justify-center items-center gap-8">
+          <!-- All Feed -->
+          <a href="/html/feed.html" title="All Feed" class="p-2 rounded-lg hover:bg-gray-100 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 0a4 4 0 013-3.87M16 3.13a4 4 0 110 7.75M8 3.13a4 4 0 110 7.75" />
+            </svg>
+          </a>
+
+          <!-- Create Post -->
+          <a href="/html/createpost.html" title="Create Post" class="p-2 rounded-lg hover:bg-gray-100 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </a>
+
+          <!-- My Courses -->
+          <a href="/html/my_courses.html" title="My Courses" class="p-2 rounded-lg hover:bg-gray-100 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Right: Notifications + Avatar -->
+        <div class="flex justify-end items-center gap-4">
+          <!-- Notifications Button -->
+          <button id="notificationsBtn" class="relative p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+            title="Notifications">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span id="notificationBadge"
+              class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"></span>
+          </button>
+
+          <!-- Avatar Dropdown -->
+          <div class="relative">
+            <button id="avatarBtn"
+              class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center hover:ring-2 hover:ring-[#6da400] transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5.121 17.804A4 4 0 018 16h8a4 4 0 012.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            <div id="dropdownMenu"
+              class="hidden absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+              <a href="/html/profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">View Profile</a>
+              <a href="/html/index.html" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">Log
+                out</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE WRAPPER -->
+  <main class="max-w-2xl mx-auto py-10 px-4">
+
+    <!-- Page Header -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-gray-900">For You Page</h1>
+    </div>
+
+    <!-- Post Feed Container -->
+    <div id="all-post-container" class="space-y-6">
+      <!-- Posts will be dynamically loaded here -->
+    </div>
+
+  </main>
+
+  <!-- Notifications Modal (add before closing body) -->
+  <div id="notificationsModal" class="hidden fixed inset-0 bg-black bg-opacity-40 z-50">
+    <div class="fixed top-20 right-4 w-96 max-w-full bg-white rounded-lg shadow-xl">
+      <div class="flex justify-between items-center p-4 border-b">
+        <h3 class="text-lg font-semibold">Notifications</h3>
+        <button onclick="closeNotifications()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div id="notificationsList" class="max-h-[60vh] overflow-y-auto p-4"></div>
+    </div>
+  </div>
+</body>
+
+</html>
