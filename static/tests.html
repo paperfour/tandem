@@ -140,6 +140,7 @@ async function createStudent() {
     })
   });
   showResult('create-student-result', await res.json());
+  getDatabase()
 }
 
 async function login() {
@@ -157,6 +158,7 @@ async function login() {
     document.getElementById('refresh-token').value = refreshTokenValue;
   }
   showResult('login-result', data);
+  getDatabase()
 }
 
 async function refreshToken() {
@@ -169,6 +171,7 @@ async function refreshToken() {
   const data = await res.json();
   if (data.access_token) accessToken = data.access_token;
   showResult('refresh-result', data);
+  getDatabase()
 }
 
 async function setCourses() {
@@ -179,6 +182,7 @@ async function setCourses() {
     body: JSON.stringify({ course_ids: ids })
   });
   showResult('courses-result', await res.json().catch(() => ({status: res.status})));
+  getDatabase()
 }
 
 async function addCourse() {
@@ -190,6 +194,7 @@ async function addCourse() {
     headers: { 'Authorization': `Bearer ${accessToken}` }
   });
   showResult('courses-result', await res.json().catch(() => ({status: res.status})));
+  getDatabase()
 }
 
 async function removeCourse() {
@@ -199,6 +204,7 @@ async function removeCourse() {
     headers: { 'Authorization': `Bearer ${accessToken}` }
   });
   showResult('courses-result', await res.json().catch(() => ({status: res.status})));
+  getDatabase()
 }
 
 async function getCourses() {
@@ -206,6 +212,7 @@ async function getCourses() {
     headers: { 'Authorization': `Bearer ${accessToken}` }
   });
   showResult('courses-result', await res.json());
+  getDatabase()
 }
 
 async function createAppointment() {
@@ -222,6 +229,7 @@ async function createAppointment() {
     body: JSON.stringify(body)
   });
   showResult('appointment-result', await res.json());
+  getDatabase()
 }
 
 async function joinAppointment() {
@@ -231,6 +239,7 @@ async function joinAppointment() {
     headers: { 'Authorization': `Bearer ${accessToken}` }
   });
   showResult('appointment-result', await res.json().catch(() => ({status: res.status})));
+  getDatabase()
 }
 
 async function leaveAppointment() {
@@ -240,6 +249,7 @@ async function leaveAppointment() {
     headers: { 'Authorization': `Bearer ${accessToken}` }
   });
   showResult('appointment-result', await res.json().catch(() => ({status: res.status})));
+  getDatabase()
 }
 
 async function endAppointment() {
@@ -248,30 +258,35 @@ async function endAppointment() {
     headers: { 'Authorization': `Bearer ${accessToken}` }
   });
   showResult('appointment-result', await res.json().catch(() => ({status: res.status})));
+  getDatabase()
 }
 
 async function getAppointment() {
   const id = document.getElementById('fetch-appt-id').value;
   const res = await fetch(`/appointment/${id}`);
   showResult('fetch-result', await res.json());
+  getDatabase()
 }
 
 async function getCourse() {
   const id = document.getElementById('fetch-course-id').value;
   const res = await fetch(`/course/${id}`);
   showResult('fetch-result', await res.json());
+  getDatabase()
 }
 
 async function getAppointmentsForCourse() {
   const id = document.getElementById('fetch-appts-course-id').value;
   const res = await fetch(`/get_appointments_for_course/${id}`);
   showResult('fetch-result', await res.json());
+  getDatabase()
 }
 
 async function getAttendees() {
   const aid = document.getElementById('fetch-attendees-aid').value;
   const res = await fetch(`/get_attending_students/${aid}`);
   showResult('fetch-result', await res.json());
+  getDatabase()
 }
 
 let dbRefreshInterval = null;
